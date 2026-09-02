@@ -1,26 +1,180 @@
 import streamlit as st
 
 
-def setup_page(title: str, icon: str):
-    """
-    Apply common configuration and layout
-    to every page in the application.
-    """
+def style_background_home():
+    st.markdown("""
+        <style>
+            .stApp {
+                background:
+                    radial-gradient(
+                        circle at top,
+                        #1F2A44 0%,
+                        #0B1220 70%
+                    ) !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-    st.set_page_config(
-        page_title=f"{title} | Busy Inventory",
-        page_icon=icon,
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
+def style_background_dashboard():
+    st.markdown("""
+        <style>
+            .stApp{
+              background:#E0E3FF !important}
+                                
+        </style>
+""", unsafe_allow_html=True)
+
+        
+def style_base_layout():
+    st.markdown("""
+        <style>
+            @import url(
+                'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
+            );
 
 
-def show_page_header(title: str, subtitle: str = ""):
-    """Display a consistent page header."""
+            /* GLOBAL FONT */
+            html, body, [class*="css"] {
+                font-family: 'Outfit', sans-serif !important;
+            }
 
-    st.title(title)
 
-    if subtitle:
-        st.caption(subtitle)
+            /* STREAMLIT TEXT */
+            p, span, label, div {
+                font-family: 'Outfit', sans-serif !important;
+            }
 
-    st.divider()
+
+            /* MAIN HEADING */
+            h1 {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 3.5rem !important;
+                font-weight: 800 !important;
+                line-height: 1.1 !important;
+                color: #F7F3EE !important;
+                margin-bottom: 0.3rem !important;
+            }
+
+
+            /* SECONDARY HEADING */
+            h2,
+            div[data-testid="stHeading"] h2 {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 2.2rem !important;
+                font-weight: 700 !important;
+                line-height: 1.2 !important;
+                color: #F7F3EE !important;
+                margin-bottom: 0.5rem !important;
+            }
+
+
+            /* SMALLER HEADINGS */
+            h3 {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 1.6rem !important;
+                font-weight: 700 !important;
+                color: #F7F3EE !important;
+            }
+
+            h4 {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 1.2rem !important;
+                font-weight: 600 !important;
+                color: #F7F3EE !important;
+            }
+
+
+            /* NORMAL TEXT */
+            p {
+                color: #B8C4D9 !important;
+                font-size: 1rem !important;
+                font-weight: 400 !important;
+                line-height: 1.6 !important;
+            }
+
+            
+
+            /* STREAMLIT TEXT */
+            .stMarkdown,
+            .stMarkdown p,
+            .stText {
+                color: #B8C4D9 !important;
+            }
+
+
+            /* BUTTONS */
+            button[kind="primary"] {
+                border-radius: 2.5rem !important;
+                background: #4753cc !important;
+                color: #FFFFFF !important;
+                padding: 10px 20px !important;
+                border: none !important;
+                font-family: 'Outfit', sans-serif !important;
+                font-weight: 600 !important;
+                transition: transform 0.25s ease-in-out !important;
+            }
+
+
+            button[kind="secondary"] {
+                border-radius: 1.5rem !important;
+                background: #4753cc !important;
+                color:#FFFFFF  !important;
+                padding: 10px 20px !important;
+                border: none !important;
+                font-family: 'Outfit', sans-serif !important;
+                font-weight: 600 !important;
+                transition: transform 0.25s ease-in-out !important;
+            }
+
+
+            button:hover {
+                transform: scale(1.03) !important;
+            }
+
+
+            .app-header {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 3rem;
+            }
+
+            .header-icon {
+                font-size: 2.6rem;
+            }
+
+            .header-brand {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 2.5rem;
+                font-weight: 800;
+                color: #F7F3EE;
+                line-height: 1;
+            }
+
+            .header-subtitle {
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 0.9rem;
+                font-weight: 400;
+                color: #B8C4D9;
+                margin-top: 0.35rem;
+            }
+
+            .app-footer {
+                text-align: center;
+                margin-top: 4rem;
+                padding-bottom: 1rem;
+                font-family: 'Outfit', sans-serif !important;
+                font-size: 0.85rem;
+                color: #8FA0B8;
+            }
+
+
+            /* STREAMLIT PAGE SPACING */
+            .block-container {
+                padding-top: 2rem !important;
+                padding-bottom: 2rem !important;
+            }
+
+        </style>
+    """, unsafe_allow_html=True)
+
