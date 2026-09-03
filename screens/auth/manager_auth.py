@@ -7,6 +7,7 @@ from utils.layout import (
 from utils.header import render_header
 from utils.footer import render_footer
 from utils.auth import (check_email_exists,create_manager,manager_login)
+from screens.manager import manager_screen
 def manager_auth_screen():
     st.markdown("""
         <style>
@@ -71,16 +72,30 @@ def manager_auth_screen():
 
         st.divider()
 
-        if st.button( "Login as Manager",type="primary", key="manager_login_button",use_container_width=True):
-            manager = manager_login(manager_email, manager_password)
+        if st.button(
+            "Login as Manager",
+            type="primary",
+            key="manager_login_button",
+            use_container_width=True
+        ):
+
             if not manager_email or not manager_password:
                 st.error("Please enter your email and password.")
 
             else:
-                
-                st.session_state["user"] = manager
-                st.session_state["login_type"] = "manager_dashboard"
-                st.rerun()
+                manager = manager_login(
+                    manager_email,
+                    manager_password
+                )
+
+                if manager:
+                    st.session_state["is_authenticated"] = True
+                    st.session_state["user"] = manager
+                    st.session_state["login_type"] = "manager_dashboard"
+                    st.rerun()
+
+                else:
+                    st.error("Invalid email or password.")
 
 
         st.space("small")

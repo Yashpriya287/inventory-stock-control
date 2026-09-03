@@ -3,7 +3,7 @@ import streamlit as st
 from screens.auth.role_selection import role_selection_screen
 from screens.auth.manager_auth import manager_auth_screen
 from screens.auth.staff_auth import staff_auth_screen
-
+from screens.manager import manager_screen
 
 def main():
 
@@ -11,7 +11,7 @@ def main():
         page_title="Busy - Inventory & Stock Control",
         page_icon="📦",
         layout="wide",
-        initial_sidebar_state="collapsed"
+        initial_sidebar_state="expanded"
     )
 
     # Initialize role selection
@@ -24,11 +24,16 @@ def main():
         case "manager":
             manager_auth_screen()
 
+               
+
         case "staff":
             staff_auth_screen()
 
+        case "manager_dashboard":
+            manager_screen()     
+
         case None:
-            role_selection_screen()
+            role_selection_screen() 
 
 
 main()

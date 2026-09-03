@@ -175,6 +175,41 @@ def style_base_layout():
                 padding-bottom: 2rem !important;
             }
 
+
+
+            # ---------- SEARCH & FILTER INPUTS ----------
+
+        div[data-testid="stTextInput"] input,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+            background-color: #F1F3F8 !important;
+            border: 1px solid #334155 !important;
+            border-radius: 10px !important;
+        }
+
+        /* Search field */
+        div[data-testid="stTextInput"] input {
+            color: #1E293B !important;
+            box-shadow: 0 0 0 1px rgba(91, 95, 199, 0.15) !important;
+        }
+
+        /* Select boxes */
+        div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
+            color: #1E293B !important;
+        }
+
+        /* Focus effect */
+        div[data-testid="stTextInput"] input:focus {
+            border: 1px solid #5B5FC7 !important;
+            box-shadow: 0 0 0 3px rgba(91, 95, 199, 0.18) !important;
+        }
+
+        /* Hover effect */
+        div[data-testid="stTextInput"] input:hover,
+        div[data-testid="stSelectbox"] div[data-baseweb="select"]:hover > div {
+            border-color: #5B5FC7 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
+
+
 
