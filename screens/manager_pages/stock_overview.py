@@ -2,9 +2,9 @@ import streamlit as st
 
 from utils.layout import style_base_layout
 
-from services.category_service import get_categories
+from manager_services.category_service import get_categories
 
-from services.stock_service import  get_stock_overview
+from manager_services.stock_service import  get_stock_overview
 
 
 

@@ -1,8 +1,8 @@
 import streamlit as st
 
 from utils.database import supabase
-from services.stock_movement_service import get_recent_stock_movements
-from services.stock_service import get_low_stock_alerts
+from manager_services.stock_movement_service import get_recent_stock_movements
+from manager_services.stock_service import get_low_stock_alerts
 
 
 def get_dashboard_data():

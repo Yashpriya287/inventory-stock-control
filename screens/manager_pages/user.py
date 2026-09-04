@@ -1,8 +1,8 @@
 import streamlit as st
 
 from utils.layout import style_base_layout
-from services.user_service import ( get_staff_users,update_staff_status, get_staff_locations, update_staff_locations)
-from services.location_service import get_locations
+from manager_services.user_service import ( get_staff_users,update_staff_status, get_staff_locations, update_staff_locations)
+from manager_services.location_service import get_locations
 
 
 def users_page():

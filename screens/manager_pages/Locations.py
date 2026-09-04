@@ -1,7 +1,7 @@
 import streamlit as st
 
 from utils.layout import style_base_layout
-from services.location_service import create_location, get_locations,update_location,update_location_status
+from manager_services.location_service import create_location, get_locations,update_location,update_location_status
 
 
 def locations_page():

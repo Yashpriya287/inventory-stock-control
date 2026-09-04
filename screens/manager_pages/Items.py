@@ -1,8 +1,8 @@
 import streamlit as st
-from services.item_service import create_item, get_items, update_item,update_item_status
+from manager_services.item_service import create_item, get_items, update_item,update_item_status
 from utils.layout import style_base_layout
-from services.category_service import get_categories
-from services.stock_service import get_available_stock_by_item
+from manager_services.category_service import get_categories
+from manager_services.stock_service import get_available_stock_by_item
 def items_page():
     style_base_layout()
     if "show_add_item_form" not in st.session_state:

@@ -1,10 +1,10 @@
 import streamlit as st
 
 from utils.layout import style_base_layout
-from services.item_service import get_items
-from services.location_service import get_locations
-from services.stock_movement_service import create_stock_movement
-from services.stock_movement_service import get_recent_stock_movements
+from manager_services.item_service import get_items
+from manager_services.location_service import get_locations
+from manager_services.stock_movement_service import create_stock_movement
+from manager_services.stock_movement_service import get_recent_stock_movements
 from datetime import datetime
 def stock_movement_page():
 

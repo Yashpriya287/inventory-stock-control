@@ -1,7 +1,7 @@
 import streamlit as st
 
 from utils.layout import style_base_layout
-from services.stock_service import get_low_stock_alerts
+from manager_services.stock_service import get_low_stock_alerts
 
 
 def low_stock_alerts_page():

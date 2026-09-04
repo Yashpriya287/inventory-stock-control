@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.layout import style_base_layout
-from services.category_service import create_category, get_categories,update_category,update_category_status
+from manager_services.category_service import create_category, get_categories,update_category,update_category_status
 
 def category_page():
 

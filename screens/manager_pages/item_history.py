@@ -2,9 +2,9 @@ import streamlit as st
 from datetime import datetime
 
 from utils.layout import style_base_layout
-from services.category_service import get_categories
-from services.item_service import get_items
-from services.item_history_service import get_item_history
+from manager_services.category_service import get_categories
+from manager_services.item_service import get_items
+from manager_services.item_history_service import get_item_history
 
 def item_history_page():
     style_base_layout()
