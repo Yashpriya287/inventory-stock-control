@@ -14,3 +14,17 @@ def get_categories():
 
     return response.data
 
+def update_category(category_id, name, description):
+
+    data = {
+        "name": name,
+        "description": description
+    }
+    response = ( supabase .table("categories").update(data).eq("id", category_id) .execute() )
+    return response.data
+
+def update_category_status(category_id, is_active):
+
+    response = (supabase.table("categories").update({"is_active": is_active}).eq("id", category_id).execute() )
+
+    return response.data

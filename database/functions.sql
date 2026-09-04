@@ -226,9 +226,22 @@ CREATE OR REPLACE FUNCTION validate_user_location_access()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    user_role_value user_role;
 BEGIN
 
-    -- RECEIPT, ISSUE, OR ADJUSTMENT
+    -- Get the role of the user recording the movement
+    SELECT role
+    INTO user_role_value
+    FROM users
+    WHERE id = NEW.recorded_by;
+
+    -- Manager has access to all locations
+    IF user_role_value = 'manager' THEN
+        RETURN NEW;
+    END IF;
+
+    -- STAFF: RECEIPT, ISSUE, OR ADJUSTMENT
     IF NEW.movement_type IN ('receipt', 'issue', 'adjustment') THEN
 
         IF NOT EXISTS (
@@ -241,7 +254,7 @@ BEGIN
                 'User does not have access to this location.';
         END IF;
 
-    -- TRANSFER
+    -- STAFF: TRANSFER
     ELSIF NEW.movement_type = 'transfer' THEN
 
         IF NOT EXISTS (
@@ -269,7 +282,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION prevent_item_history_changes()
 RETURNS TRIGGER

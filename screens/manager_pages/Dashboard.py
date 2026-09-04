@@ -1,6 +1,8 @@
 import streamlit as st
 
 from utils.database import supabase
+from services.stock_movement_service import get_recent_stock_movements
+from services.stock_service import get_low_stock_alerts
 
 
 def get_dashboard_data():
@@ -22,6 +24,10 @@ def get_dashboard_data():
 
 
 def dashboard_screen():
+
+    def handle_quick_action(page, action):
+        st.session_state["selected_page"] = page
+        st.session_state["dashboard_action"] = action
 
     current_user = st.session_state.get("user")
 
@@ -55,46 +61,116 @@ def dashboard_screen():
 
     st.divider()
 
-    # QUICK ACTIONS
+   # ---------- QUICK ACTIONS ----------
 
     st.subheader("Quick Actions")
 
-    action_col1, action_col2, action_col3, action_col4 = st.columns(4) 
+    action_col1, action_col2, action_col3, action_col4 = st.columns(4)
 
     with action_col1:
 
-        if st.button( "➕ Add Item", use_container_width=True ):
-            st.session_state["dashboard_action"] = "Items"
+        st.button(
+            "➕ Add Item",
+            use_container_width=True,
+            on_click=handle_quick_action,
+            args=(
+                "📦  Items",
+                "add_item"
+            )
+        )
+
 
     with action_col2:
-
-        if st.button( "📥 Receive Stock", use_container_width=True):
+        if st.button("📥 Receive Stock", use_container_width=True):
             st.session_state["dashboard_action"] = "Stock Movements"
+            st.session_state["stock_movement_action"] = "Receive"
+            st.rerun()
+
 
     with action_col3:
-
-        if st.button( "↔️ Transfer Stock", use_container_width=True ):
+        if st.button("↔️ Transfer Stock", use_container_width=True):
             st.session_state["dashboard_action"] = "Stock Movements"
+            st.session_state["stock_movement_action"] = "Transfer"
+            st.rerun()
+
 
     with action_col4:
 
-        if st.button( "➕ Add Staff", use_container_width=True):
-            st.session_state["dashboard_action"] = "Users"
-
+        st.button(
+            "👥 Manage Staff",
+            use_container_width=True,
+            on_click=handle_quick_action,
+            args=(
+                "👥  Users",
+                "add_staff"
+            )
+        )
 
     st.divider()
     # SECOND SECTION
 
-    left_col, right_col = st.columns([1.2, 1],  gap="large")
+    left_col, right_col = st.columns([1.2, 1],gap="large")
+
+    # ---------- RECENT ACTIVITY ----------
 
     with left_col:
 
         st.subheader("Recent Activity")
 
-        st.info(  "Recent stock movements will appear here.")
+        recent_movements = get_recent_stock_movements()[:3]
+
+        if recent_movements:
+
+            for movement in recent_movements:
+
+                item_name = movement["items"]["name"]
+
+                movement_type = movement["movement_type"].lower()
+
+                if movement_type == "transfer":
+
+                    from_location = (
+                        movement.get("source_location") or {}
+                    ).get("name", "Unknown")
+
+                    to_location = (
+                        movement.get("destination_location") or {}
+                    ).get("name", "Unknown")
+
+                    location = f"{from_location} → {to_location}"
+
+                else:
+
+                    location = (
+                        movement.get("locations") or {}
+                    ).get("name", "Unknown Location")
+
+                st.info(
+                    f"**{movement['movement_type'].title()}:** "
+                    f"{movement['quantity']} {item_name} → "
+                    f"**{location}**"
+                )
+
+        else:
+            st.info("No recent activity.")
+
 
     with right_col:
 
         st.subheader("Low Stock Alerts")
 
-        st.success( "No low stock alerts." )
+        low_stock_alerts = get_low_stock_alerts()
+
+        if low_stock_alerts:
+
+            for alert in low_stock_alerts:
+
+                st.warning(
+                    f"⚠ **{alert['Item']}** — "
+                    f"{alert['Location']}"
+                )
+
+        else:
+            st.success("No low stock alerts.")
+
+    

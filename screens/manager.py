@@ -6,6 +6,12 @@ from utils.sidebar_layout import sidebar_base_layout
 from screens.manager_pages.Dashboard import dashboard_screen
 from screens.manager_pages.Items import items_page
 from screens.manager_pages.category import category_page
+from screens.manager_pages.Locations import locations_page
+from screens.manager_pages.stock_overview import stock_overview_page
+from screens.manager_pages.Stock_Movements import stock_movement_page
+from screens.manager_pages.Alerts import low_stock_alerts_page
+from screens.manager_pages.item_history import item_history_page
+from screens.manager_pages.user import users_page
 def manager_screen():
     style_base_layout()
     style_background_home()
@@ -18,6 +24,28 @@ def manager_screen():
     if not current_user:
         st.warning("Please log in first.")
         return
+
+    if "selected_page" not in st.session_state:
+        st.session_state["selected_page"] = "🏠  Dashboard"
+
+    # ---------- DASHBOARD QUICK ACTION ----------
+
+    if st.session_state.get("dashboard_action"):
+
+        action = st.session_state["dashboard_action"]
+
+        if action == "Items":
+            st.session_state["selected_page"] = "📦  Items"
+
+        elif action == "Stock Movements":
+            st.session_state["selected_page"] = "↔️  Stock Movements"
+
+        elif action == "Users":
+            st.session_state["selected_page"] = "👥  Users"
+
+        # Clear the dashboard action after changing the page
+        st.session_state["dashboard_action"] = None
+        
 
     with st.sidebar:
 
@@ -67,6 +95,7 @@ def manager_screen():
                 "🔔  Low Stock Alerts",
                 "↩️  Item History"
             ],
+            key="selected_page",
             label_visibility="collapsed"
         )
 
@@ -124,46 +153,30 @@ def manager_screen():
 
     elif page_name == "Locations":
 
-        st.title("Locations")
-        st.write("Manage inventory locations here.")
+        locations_page()
 
 
     elif page_name == "Stock Overview":
 
-        st.title("Stock Overview")
-        st.write(
-            "View current stock across all locations."
-        )
+        stock_overview_page()
 
 
     elif page_name == "Stock Movements":
 
-        st.title("Stock Movements")
-        st.write(
-            "Manage receipts, issues, transfers and adjustments."
-        )
+        stock_movement_page()
 
 
     elif page_name == "Users":
 
-        st.title("Users")
-        st.write(
-            "Manage staff users and their access."
-        )
+        users_page()
 
 
     elif page_name == "Low Stock Alerts":
 
-        st.title("Low Stock Alerts")
-        st.write(
-            "View and manage low stock alerts."
-        )
+        low_stock_alerts_page()
 
 
     elif page_name == "Item History":
 
-        st.title("Item History")
-        st.write(
-            "View complete item activity history."
-        )
+        item_history_page()
 

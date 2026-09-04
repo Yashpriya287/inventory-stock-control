@@ -208,6 +208,15 @@ def style_base_layout():
         div[data-testid="stSelectbox"] div[data-baseweb="select"]:hover > div {
             border-color: #5B5FC7 !important;
         }
+
+       /* Fix Streamlit internal icons */
+        [data-testid="stIconMaterial"],
+        [data-testid="stPopover"] span {
+            font-family: "Material Symbols Rounded" !important;
+            font-style: normal !important;
+            font-weight: normal !important;
+            line-height: 1 !important;
+        }
         </style>
     """, unsafe_allow_html=True)
 

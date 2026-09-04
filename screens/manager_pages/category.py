@@ -1,6 +1,6 @@
 import streamlit as st
 from utils.layout import style_base_layout
-from services.category_service import create_category, get_categories
+from services.category_service import create_category, get_categories,update_category,update_category_status
 
 def category_page():
 
@@ -8,10 +8,8 @@ def category_page():
     if "show_add_category_form" not in st.session_state:
         st.session_state.show_add_category_form = False
 
-    # ---------- SESSION STATE ----------
-
-    if "show_add_category_form" not in st.session_state:
-        st.session_state.show_add_category_form = False
+    if "editing_category_id" not in st.session_state:
+        st.session_state.editing_category_id = None
 
     # ---------- HEADER ----------
 
@@ -82,14 +80,21 @@ def category_page():
                         st.error(f"Error adding category: {e}")
         st.divider()
 
-    # ---------- SEARCH ----------
+    # ---------- CATEGORY FILTER ----------
 
-    search_col, empty_col = st.columns([2, 3])
+    categories = get_categories()
 
-    with search_col:
-        search = st.text_input(
-            "Search Categories",
-            placeholder="🔍 Search categories",
+    category_options = ["All Categories"] + [
+        category["name"] for category in categories
+    ]
+
+    filter_col, empty_col = st.columns([2, 3])
+
+    with filter_col:
+
+        selected_category_name = st.selectbox(
+            "Select Category",
+            category_options,
             label_visibility="collapsed"
         )
 
@@ -116,21 +121,14 @@ def category_page():
     st.divider()
 
 
-    # ---------- DATABASE CATEGORIES ----------
+    # ---------- CATEGORY FILTER ----------
 
-    categories = get_categories()
-
-
-    # ---------- SEARCH FILTER ----------
-
-    if search:
-
-        search = search.lower()
+    if selected_category_name != "All Categories":
 
         categories = [
-            category for category in categories
-            if search in category["name"].lower()
-            or search in (category["description"] or "").lower()
+            category
+            for category in categories
+            if category["name"] == selected_category_name
         ]
 
 
@@ -153,13 +151,86 @@ def category_page():
                 if category["description"]
                 else "—"
             )
+            if category["is_active"]:
+                cols[2].warning("Active")
+            else:
+                cols[2].success("Inactive")
 
-            # Schema currently has no is_archived column
-            cols[2].success("Active")
+            with cols[3]:
+                with st.popover("•••"):
+                    if st.button("✏️ Edit", key=f"edit_category_{category['id']}"):
+                        st.session_state.editing_category_id = category["id"]
+                        st.rerun()
 
-            cols[3].button(
-                "•••",
-                key=f"category_action_{category['id']}"
+                    if category["is_active"]:
+                        if st.button("Deactivate", key=f"deactivate_category_{category['id']}"):
+                            try:
+                                update_category_status(
+                                    category["id"],False)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating category: {e}")
+
+                    else:
+                        if st.button( "Activate", key=f"activate_category_{category['id']}" ):
+                            try:
+                                update_category_status(
+                                    category["id"],
+                                    True)
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating category: {e}")
+        #  EDIT CATEGORY 
+
+        if st.session_state.editing_category_id:
+            selected_category = next(
+                (
+                    category
+                    for category in categories
+                    if category["id"] == st.session_state.editing_category_id
+                ),
+                None
             )
+
+            if selected_category:
+
+                st.subheader("Edit Category")
+
+                category_name = st.text_input( "Category Name",value=selected_category["name"], key=f"edit_category_name_{selected_category['id']}" )
+                description = st.text_input( "Description",value=selected_category["description"] or "", key=f"edit_category_description_{selected_category['id']}")
+                st.write("")
+
+                cancel_col, save_col, _ = st.columns([1, 1, 3])
+
+                with cancel_col:
+
+                    if st.button( "Cancel Edit", use_container_width=True, key="cancel_edit_category"):
+                        st.session_state.editing_category_id = None
+                        st.rerun()
+
+                with save_col:
+
+                    if st.button( "Save Changes", type="primary",use_container_width=True, key="save_edit_category" ):
+
+                        if not category_name.strip():
+                            st.error("Please enter a category name.")
+
+                        else:
+                            try:
+
+                                update_category(
+                                    category_id=selected_category["id"],
+                                    name=category_name.strip(),
+                                    description=description.strip()
+                                )
+
+                                st.session_state.editing_category_id = None
+                                st.success("Category updated successfully!")
+                                st.rerun()
+
+                            except Exception as e:
+                                st.error(f"Error updating category: {e}")                
 
             st.divider()
