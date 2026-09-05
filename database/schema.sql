@@ -14,6 +14,8 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE categories
+ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE;
 
 CREATE TABLE categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -41,6 +43,14 @@ CREATE TABLE user_locations (
     PRIMARY KEY (user_id, location_id)
 );
 
+INSERT INTO user_locations (user_id, location_id)
+SELECT 
+    u.id,
+    l.id
+FROM users u
+CROSS JOIN locations l
+WHERE u.email = 'YOUR_MANAGER_EMAIL'
+AND l.name = 'Kanpur';
 
 CREATE TABLE items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -221,3 +231,6 @@ SELECT
 FROM movement_effects
 
 GROUP BY item_id, location_id;
+
+
+

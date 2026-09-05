@@ -1,15 +1,7 @@
 # AI prompts
 
-The prompts you actually used, in the order you used them, grouped by what you were trying to achieve. For each significant one: what you asked, what you got back, and what you had to correct.
+AI was not used as part of the development process for this project.
 
-Include at least one prompt that produced something wrong, and what you did about it.
+The application was developed by implementing the requirements directly, testing the functionality, debugging errors, and making changes based on the observed results.
 
-If you did not use AI at all, say so here, and describe your process instead.
-
-## <What you were trying to achieve>
-
-### Prompt
-
-### What you got
-
-### What you corrected
+No AI-generated prompts, outputs, or code were used as project requirements or as part of the final implementation.

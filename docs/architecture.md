@@ -1,59 +1,68 @@
 # Architecture
 
-Answer each of these, in your own words, once the system has taken real shape.
-
-- What are the moving pieces, and how do they talk to each other?
-- Where does each piece run?
-- What is the request path for one representative user action, end to end?
-- What did you decide *not* to build, and why?
-
-
-# Architecture
-
 ## 1. What are the moving pieces, and how do they talk to each other?
 
-The Inventory Management System is built using a layered architecture.
+The Inventory Management System follows a layered architecture using Streamlit for the application interface and Supabase/PostgreSQL for data storage.
 
-The main moving pieces are:
+The main components are:
 
-- **Streamlit UI** – Handles the user interface, including login, dashboard, item management, and category management.
-- **Application Pages** – Pages such as `items.py` and `category.py` contain the page-level logic and interact with the service layer.
-- **Service Layer** – Files such as `item_service.py`, `category_service.py`, and `auth.py` handle communication between the application and the database.
-- **Supabase** – Provides the backend database and stores application data.
-- **PostgreSQL Database** – Stores users, categories, items, locations, stock movements, item history, and low-stock alerts.
+- **Streamlit Application** – Provides the user interface and handles user interaction.
+- **Authentication** – Handles login and determines whether the user is a manager or warehouse staff.
+- **Manager Pages** – Provide manager functionality such as item management, categories, locations, users, dashboard, stock overview, stock movements, item history, and import/export.
+- **Staff Pages** – Provide warehouse staff functionality such as dashboard, items, stock overview, stock movements, low-stock alerts, and item history.
+- **Service Layer** – Contains the application logic and database operations. Manager and staff functionality is separated into their respective service modules.
+- **Supabase Client** – Acts as the connection between the Python application and the backend database.
+- **PostgreSQL Database** – Stores users, items, categories, locations, user-location assignments, stock movements, and item history. Database views/functions are also used where required for inventory calculations.
 
-The general flow is:
+The general communication flow is:
 
-Streamlit UI → Page Logic → Service Layer → Supabase → PostgreSQL Database
+Streamlit UI → Page → Service Layer → Supabase Client → PostgreSQL
 
-Data returned from the database travels back through the same path and is displayed in the Streamlit interface.
+The response then travels back through the service layer to the page, where the result is displayed in the Streamlit interface.
+
+---
 
 ## 2. Where does each piece run?
 
-The Streamlit application runs in the Python application environment.
+The Streamlit application, pages, authentication logic, and service layer all run in the Python application environment.
 
-The frontend UI and page logic run together inside the Streamlit application. The service layer also runs as part of the same Python application and communicates with Supabase using the Supabase Python client.
+The application is organized into separate modules:
 
-The database runs separately on Supabase, where PostgreSQL stores and manages the application data.
+- `screens/manager_pages/` contains manager-facing pages.
+- `screens/staff_pages/` contains warehouse staff pages.
+- `manager_services/` contains manager-related database and business logic.
+- `staff_services/` contains staff-related database and business logic.
+- `utils/` contains shared functionality such as database access, layout, sidebar handling, and time formatting.
+
+Supabase runs separately as the backend service. PostgreSQL is hosted by Supabase and stores the application's persistent data.
+
+---
 
 ## 3. What is the request path for one representative user action, end to end?
 
-One representative user action is adding a new inventory item.
+A representative action is a manager creating a new inventory item.
 
-1. A manager opens the Items page.
-2. The manager clicks the **Add Item** button.
-3. The manager enters the SKU, item name, category, unit of measure, reorder level, and optional description.
-4. The Items page retrieves available categories from the `categories` table.
-5. When the manager clicks **Save Item**, the page sends the item data to the `create_item()` function in `item_service.py`.
-6. The service layer uses the Supabase client to insert the item into the `items` table.
-7. PostgreSQL validates the data using the database schema and constraints.
-8. Supabase returns the result to the service layer.
-9. The Streamlit application reruns and displays the newly added item in the Items table.
+1. The manager logs into the Streamlit application.
+2. The manager opens the **Items** page.
+3. The manager enters the item's SKU, name, description, unit of measure, reorder level, and category.
+4. The page collects the entered values and sends them to the `create_item()` function in the item service.
+5. The service layer prepares the item data and uses the Supabase client to insert it into the `items` table.
+6. PostgreSQL stores the new item and applies the database rules and constraints.
+7. Supabase returns the result to the Python application.
+8. The Streamlit page reruns and displays the newly created item.
 
-## 4. What did you decide *not* to build, and why?
+The same basic pattern is used for other operations such as stock movements, category management, location management, and item history.
 
-The current project does not use a separate custom REST API backend because the application is built directly with Streamlit and Supabase. This reduced development complexity and allowed the project to focus on the required inventory management features.
+For staff operations, an additional permission check is performed so that staff can only perform the operations allowed for their role and assigned locations.
 
-The application also does not use microservices because the project is a single inventory management application and a layered structure is sufficient for the current scale.
+---
 
-Some advanced features, such as complex role-permission management, external integrations, and real-time collaboration, were not added because they were outside the core scope of the project.
+## 4. What did you decide not to build, and why?
+
+A separate custom REST API backend was not built because Streamlit and the Supabase client were sufficient for the requirements of this project. Adding another backend layer would have increased development and maintenance complexity without providing a significant benefit for the current application.
+
+Microservices were also not used because this is a single inventory management application. A modular layered structure was sufficient to keep the code organized.
+
+The project also does not include advanced features such as external ERP integrations, complex enterprise permission management, or real-time multi-user collaboration. These were outside the core requirements and would require additional infrastructure and development time.
+
+The focus was kept on implementing the required inventory, stock movement, role-based access, location assignment, reporting, import/export, and history functionality.

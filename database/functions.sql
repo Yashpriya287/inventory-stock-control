@@ -316,3 +316,4 @@ BEGIN
         'Stock movements are immutable. Create a new corrective movement instead.';
 END;
 $$;
+
