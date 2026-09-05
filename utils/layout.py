@@ -32,6 +32,12 @@ def style_base_layout():
                 'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
             );
 
+            /*hide top baar of streamlit*/
+            #MainMenu, footer, header{
+                        visibility:hidden;}
+                        .block-container{
+                        padding-top:1.5rem}
+
 
             /* GLOBAL FONT */
             html, body, [class*="css"] {
