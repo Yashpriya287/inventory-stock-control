@@ -5,7 +5,7 @@ from manager_services.item_service import get_items
 from manager_services.location_service import get_locations
 from manager_services.stock_movement_service import create_stock_movement
 from manager_services.stock_movement_service import get_recent_stock_movements
-from datetime import datetime
+from utils.time_utils import format_ist
 def stock_movement_page():
 
     style_base_layout()
@@ -413,9 +413,9 @@ def stock_movement_page():
 
             # ---------- TIME ----------
 
-            formatted_time = datetime.fromisoformat(
-                movement["created_at"].replace("Z", "+00:00")
-            ).strftime("%d %b %Y, %H:%M")
+            formatted_time = format_ist(
+                movement["created_at"]
+            )
 
 
             # ---------- DISPLAY ROW ----------

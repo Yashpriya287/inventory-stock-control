@@ -136,7 +136,8 @@ def items_page():
                             description=None,
                             unit_of_measure="Piece",
                             reorder_level=reorder_level,
-                            category_id=category_id
+                            category_id=category_id,
+                            performed_by=st.session_state["user"]["id"]
                         )
 
                         st.session_state.show_add_item_form = False
@@ -656,7 +657,8 @@ def items_page():
                                 sku=edit_sku.strip(),
                                 name=edit_name.strip(),
                                 reorder_level=edit_reorder_level,
-                                category_id=edit_category_id
+                                category_id=edit_category_id,
+                                performed_by=st.session_state["user"]["id"]
                             )
 
                             st.session_state.editing_item_id = None

@@ -51,35 +51,47 @@ def import_export_page():
 
                 try:
 
-                    imported, errors = import_items_csv(
-                        item_file
-                    )
+                    current_user = st.session_state.get("user")
 
-                    if imported:
-                        st.success(
-                            f"{len(imported)} item(s) "
-                            "imported successfully."
-                        )
-
-                    if errors:
+                    if not current_user:
 
                         st.error(
-                            f"{len(errors)} row(s) "
-                            "could not be imported."
+                            "You must be logged in as a manager."
                         )
 
-                        for error in errors:
+                    else:
 
-                            st.write(
-                                f"❌ Row {error['row']}: "
-                                f"{error['error']}"
+                        imported, errors = import_items_csv(
+                            item_file,
+                            current_user["id"]
+                        )
+
+                        if imported:
+
+                            st.success(
+                                f"{len(imported)} item(s) "
+                                "imported successfully."
                             )
 
-                    if not imported and not errors:
+                        if errors:
 
-                        st.info(
-                            "No rows were found in the CSV."
-                        )
+                            st.error(
+                                f"{len(errors)} row(s) "
+                                "could not be imported."
+                            )
+
+                            for error in errors:
+
+                                st.write(
+                                    f"❌ Row {error['row']}: "
+                                    f"{error['error']}"
+                                )
+
+                        if not imported and not errors:
+
+                            st.info(
+                                "No rows were found in the CSV."
+                            )
 
                 except Exception as e:
 

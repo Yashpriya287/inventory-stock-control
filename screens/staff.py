@@ -9,6 +9,7 @@ from screens.staff_pages.stock_overview import staff_stock_overview_page
 from screens.staff_pages.stock_movement import staff_stock_movements_page
 from screens.staff_pages.low_stock_alert import staff_low_stock_alert_page
 from screens.staff_pages.item_history import staff_item_history_page
+from screens.staff_pages.import_export import staff_import_export_page
 def staff_screen():
 
     # ---------- PAGE STYLING ----------
@@ -78,7 +79,8 @@ def staff_screen():
                 "📊  Stock Overview",
                 "↔️  Stock Movements",
                 "🔔  Low Stock Alerts",
-                "↩️  Item History"
+                "↩️  Item History",
+                "📥  Import / Export"
             ],
             key="staff_selected_page",
             label_visibility="collapsed"
@@ -135,3 +137,7 @@ def staff_screen():
     elif page_name == "Item History":
 
         staff_item_history_page()
+
+    elif page_name == "Import / Export":
+
+       staff_import_export_page()    

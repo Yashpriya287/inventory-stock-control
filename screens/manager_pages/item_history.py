@@ -1,24 +1,49 @@
 import streamlit as st
-from datetime import datetime
+from utils.time_utils import format_ist
 
 from utils.layout import style_base_layout
 from manager_services.category_service import get_categories
 from manager_services.item_service import get_items
 from manager_services.item_history_service import get_item_history
 
+
+def format_value(value):
+    """Convert JSONB values into a simple display string."""
+    if value is None:
+        return "-"
+
+    if isinstance(value, dict):
+        return str(value.get("name", value))
+
+    return str(value)
+
+
 def item_history_page():
+
     style_base_layout()
+
     st.title("Item History")
-    st.caption("Track the complete movement and activity history of your inventory.")
+    st.caption(
+        "Track the complete movement and activity history of your inventory."
+    )
+
     st.write("")
+
+    # ==================================================
+    # GET DATA
+    # ==================================================
+
     categories = get_categories()
     items = get_items()
-   
+
     category_options = {
         category["name"]: category["id"]
         for category in categories
     }
-    # ---------- FILTERS ----------
+
+    # ==================================================
+    # FILTERS
+    # ==================================================
 
     filter_col, _ = st.columns([1, 2])
 
@@ -28,6 +53,7 @@ def item_history_page():
             "Category",
             ["Select Category"] + list(category_options.keys())
         )
+
         item_name = "Select Item"
 
         if category_name != "Select Category":
@@ -49,142 +75,396 @@ def item_history_page():
                 "Item",
                 ["Select Item"] + list(item_options.keys())
             )
-    # ITEM HISTORY
+
+    # ==================================================
+    # HISTORY
+    # ==================================================
+
     if item_name != "Select Item":
+
         selected_item_id = item_options[item_name]
+
         item_history = get_item_history(
-            selected_item_id )
+            selected_item_id
+        )
+
         st.write("")
-        # ---------- NO HISTORY ----------
+
         if not item_history:
-            st.info(  "No history is available for this item yet.")
+
+            st.info(
+                "No history is available for this item yet."
+            )
+
         else:
-            st.subheader("History")
-            ( type_col, quantity_col,location_col, user_col, time_col ) = st.columns([1.4, 1, 2, 1.5, 1.8])
 
-            with type_col:
-                st.caption("Type")
+            # ==================================================
+            # ITEM ACTIVITY
+            # ==================================================
 
-            with quantity_col:
-                st.caption("Quantity")
+            activity_history = [
+                history
+                for history in item_history
+                if history.get("history_type") == "activity"
+            ]
 
-            with location_col:
-                st.caption("Location / Route")
+            if activity_history:
 
-            with user_col:
-                st.caption("Performed By")
+                st.subheader("Item Activity")
 
-            with time_col:
-                st.caption("Time")
+                for history in activity_history:
 
-            st.divider()
-            # ---------- HISTORY ROWS ----------
-            for history in item_history:
+                    event_type = history.get(
+                        "event_type",
+                        ""
+                    )
 
-                (type_col,quantity_col, location_col, user_col,time_col) = st.columns([1.4, 1, 2, 1.5, 1.8])
-                movement_type = history["movement_type"]
+                    performed_by = history.get(
+                        "performed_by",
+                        "-"
+                    )
 
-                # ---------- TYPE ----------
+                    performed_by_role = history.get(
+                        "performed_by_role",
+                        "-"
+                    )
 
-                with type_col:
+                    # ---------- CREATED ----------
 
-                    if movement_type == "receipt":
+                    if event_type == "created":
 
-                        st.markdown( "📥 **Receipt**" )
-
-                    elif movement_type == "issue":
-
-                        st.markdown( "📤 **Issue**" )
-
-                    elif movement_type == "transfer":
-
-                        st.markdown( "🚚 **Transfer**")
-
-                    elif movement_type == "adjustment":
-
-                        st.markdown("🔧 **Adjustment**" )
-
-                # ---------- QUANTITY ----------
-
-                with quantity_col:
-
-                    if movement_type == "receipt":
-
-                        st.markdown( f"**+{history['quantity']:.0f}**" )
-
-                    elif movement_type == "issue":
-
-                        st.markdown(f"**-{history['quantity']:.0f}**")
-
-                    elif movement_type == "adjustment":
-
-                        adjustment_direction = (
-                            history.get(
-                                "adjustment_direction",
-                                ""
-                            ) )
-
-                        if adjustment_direction == "increase":
-
-                            st.markdown( f"**+{history['quantity']:.0f}**")
-                        else:
-
-                            st.markdown(f"**-{history['quantity']:.0f}**")
-                    else:
-
-                        st.markdown(f"**{history['quantity']:.0f}**")
-                # ---------- LOCATION / ROUTE ----------
-
-                with location_col:
-
-                    if movement_type == "transfer":
-                        source_location = (
-                            history.get(
-                                "source_location_name", "-") )
-
-                        destination_location = (
-                            history.get( "destination_location_name", "-" ))
-
-                        st.write(
-                            f"{source_location} → "
-                            f"{destination_location}"
+                        st.markdown(
+                            "🟢 **Item Created**"
                         )
 
-                    else:
+                        st.caption(
+                            f"Created by: "
+                            f"**{performed_by}** "
+                            f"({performed_by_role})"
+                        )
+
+                    # ---------- FIELD CHANGED ----------
+
+                    elif event_type == "field_changed":
+
+                        field_name = history.get(
+                            "field_name",
+                            "Field"
+                        )
+
+                        old_value = format_value(
+                            history.get("old_value")
+                        )
+
+                        new_value = format_value(
+                            history.get("new_value")
+                        )
+
+                        field_display_names = {
+                            "name": "Name",
+                            "category": "Category",
+                            "reorder_level": "Reorder Level"
+                        }
+
+                        display_name = (
+                            field_display_names.get(
+                                field_name,
+                                field_name.replace(
+                                    "_",
+                                    " "
+                                ).title()
+                            )
+                        )
+
+                        if field_name == "name":
+
+                            icon = "✏️"
+
+                        elif field_name == "category":
+
+                            icon = "🏷️"
+
+                        elif field_name == "reorder_level":
+
+                            icon = "🔢"
+
+                        else:
+
+                            icon = "✏️"
+
+                        st.markdown(
+                            f"{icon} **{display_name} Changed**"
+                        )
+
+                        st.write(
+                            f"**{old_value} → {new_value}**"
+                        )
+
+                        st.caption(
+                            f"Changed by: "
+                            f"**{performed_by}** "
+                            f"({performed_by_role})"
+                        )
+
+                    # ---------- STAFF NOTE ----------
+
+                    elif event_type == "note":
+
+                        st.markdown(
+                            "📝 **Staff Note**"
+                        )
 
                         st.write(
                             history.get(
-                                "location_name",
+                                "note",
                                 "-"
                             )
                         )
 
-                # ---------- PERFORMED BY ----------
+                        st.caption(
+                            f"Added by: "
+                            f"**{performed_by}** "
+                            f"({performed_by_role})"
+                        )
+
+                    # ---------- FALLBACK ----------
+
+                    else:
+
+                        st.markdown(
+                            f"📌 **{event_type.replace('_', ' ').title()}**"
+                        )
+
+                        if history.get("note"):
+
+                            st.write(
+                                history["note"]
+                            )
+
+                        st.caption(
+                            f"Performed by: "
+                            f"**{performed_by}** "
+                            f"({performed_by_role})"
+                        )
+
+                    # ---------- TIME ----------
+
+                    st.caption(
+                        format_ist(
+                            history["created_at"]
+                        )
+                    )
+
+                    st.divider()
+
+            # ==================================================
+            # STOCK MOVEMENT HISTORY
+            # ==================================================
+
+            movement_history = [
+                history
+                for history in item_history
+                if history.get("history_type") == "movement"
+            ]
+
+            if movement_history:
+
+                st.subheader("Stock Movement History")
+
+                (
+                    type_col,
+                    quantity_col,
+                    location_col,
+                    user_col,
+                    time_col
+                ) = st.columns(
+                    [1.4, 1, 2, 1.5, 1.8]
+                )
+
+                with type_col:
+                    st.caption("Type")
+
+                with quantity_col:
+                    st.caption("Quantity")
+
+                with location_col:
+                    st.caption("Location / Route")
 
                 with user_col:
+                    st.caption("Performed By")
 
-                    st.write(
-                        history.get(
+                with time_col:
+                    st.caption("Time")
+
+                st.divider()
+
+                # ==================================================
+                # MOVEMENT ROWS
+                # ==================================================
+
+                for history in movement_history:
+
+                    (
+                        type_col,
+                        quantity_col,
+                        location_col,
+                        user_col,
+                        time_col
+                    ) = st.columns(
+                        [1.4, 1, 2, 1.5, 1.8]
+                    )
+
+                    movement_type = history.get(
+                        "movement_type",
+                        ""
+                    )
+
+                    # ---------- TYPE ----------
+
+                    with type_col:
+
+                        if movement_type == "receipt":
+
+                            st.markdown(
+                                "📥 **Receipt**"
+                            )
+
+                        elif movement_type == "issue":
+
+                            st.markdown(
+                                "📤 **Issue**"
+                            )
+
+                        elif movement_type == "transfer":
+
+                            st.markdown(
+                                "🚚 **Transfer**"
+                            )
+
+                        elif movement_type == "adjustment":
+
+                            st.markdown(
+                                "🔧 **Adjustment**"
+                            )
+
+                        else:
+
+                            st.markdown(
+                                f"**{movement_type.capitalize()}**"
+                            )
+
+                    # ---------- QUANTITY ----------
+
+                    with quantity_col:
+
+                        quantity = float(
+                            history.get(
+                                "quantity",
+                                0
+                            )
+                        )
+
+                        if movement_type == "receipt":
+
+                            st.markdown(
+                                f"**+{quantity:.0f}**"
+                            )
+
+                        elif movement_type == "issue":
+
+                            st.markdown(
+                                f"**-{quantity:.0f}**"
+                            )
+
+                        elif movement_type == "adjustment":
+
+                            adjustment_direction = (
+                                history.get(
+                                    "adjustment_direction",
+                                    ""
+                                )
+                            )
+
+                            if adjustment_direction == "increase":
+
+                                st.markdown(
+                                    f"**+{quantity:.0f}**"
+                                )
+
+                            else:
+
+                                st.markdown(
+                                    f"**-{quantity:.0f}**"
+                                )
+
+                        else:
+
+                            st.markdown(
+                                f"**{quantity:.0f}**"
+                            )
+
+                    # ---------- LOCATION / ROUTE ----------
+
+                    with location_col:
+
+                        if movement_type == "transfer":
+
+                            source_location = history.get(
+                                "source_location_name",
+                                "-"
+                            )
+
+                            destination_location = history.get(
+                                "destination_location_name",
+                                "-"
+                            )
+
+                            st.write(
+                                f"{source_location} → "
+                                f"{destination_location}"
+                            )
+
+                        else:
+
+                            st.write(
+                                history.get(
+                                    "location_name",
+                                    "-"
+                                )
+                            )
+
+                    # ---------- PERFORMED BY ----------
+
+                    with user_col:
+
+                        performed_by = history.get(
                             "performed_by",
                             "-"
                         )
-                    )
 
-                # ---------- TIME ----------
+                        performed_by_role = history.get(
+                            "performed_by_role",
+                            "-"
+                        )
 
-                with time_col:
+                        st.write(
+                            performed_by
+                        )
 
-                    created_at = datetime.fromisoformat(
-                        history["created_at"].replace(
-                            "Z",
-                            "+00:00"
+                        if performed_by_role != "-":
+
+                            st.caption(
+                                performed_by_role
+                            )
+
+                    # ---------- TIME ----------
+
+                    with time_col:
+
+                       st.write(
+                        format_ist(
+                            history["created_at"]
                         )
                     )
 
-                    st.write(
-                        created_at.strftime(
-                            "%d %b %Y, %I:%M %p"
-                        )
-                    )
-
-                st.divider()
+                    st.divider()

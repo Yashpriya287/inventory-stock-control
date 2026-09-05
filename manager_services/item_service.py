@@ -7,7 +7,8 @@ def create_item(
     description,
     unit_of_measure,
     reorder_level,
-    category_id
+    category_id,
+    performed_by
 ):
     data = {
         "sku": sku,
@@ -24,6 +25,15 @@ def create_item(
         .insert(data)
         .execute()
     )
+
+    created_item = response.data[0]
+
+    # Record item creation in immutable history
+    supabase.table("item_history").insert({
+        "item_id": created_item["id"],
+        "event_type": "created",
+        "performed_by": performed_by
+    }).execute()
 
     return response.data
 def get_items():
@@ -260,8 +270,34 @@ def update_item(
     sku,
     name,
     reorder_level,
-    category_id
+    category_id,
+    performed_by
 ):
+
+    # Get current item before updating
+    current_response = (
+        supabase
+        .table("items")
+        .select(
+            """
+            id,
+            sku,
+            name,
+            reorder_level,
+            category_id,
+            categories (
+                id,
+                name
+            )
+            """
+        )
+        .eq("id", item_id)
+        .single()
+        .execute()
+    )
+
+    current_item = current_response.data
+
     data = {
         "sku": sku,
         "name": name,
@@ -276,6 +312,76 @@ def update_item(
         .eq("id", item_id)
         .execute()
     )
+
+    # ==================================================
+    # NAME CHANGE
+    # ==================================================
+
+    if current_item["name"] != name:
+
+        supabase.table("item_history").insert({
+            "item_id": item_id,
+            "event_type": "field_changed",
+            "field_name": "name",
+            "old_value": current_item["name"],
+            "new_value": name,
+            "performed_by": performed_by
+        }).execute()
+
+    # ==================================================
+    # CATEGORY CHANGE
+    # ==================================================
+
+    if current_item["category_id"] != category_id:
+
+        old_category = (
+            current_item.get("categories") or {}
+        ).get("name", "-")
+
+        new_category_response = (
+            supabase
+            .table("categories")
+            .select("name")
+            .eq("id", category_id)
+            .single()
+            .execute()
+        )
+
+        new_category = (
+            new_category_response.data or {}
+        ).get("name", "-")
+
+        supabase.table("item_history").insert({
+            "item_id": item_id,
+            "event_type": "field_changed",
+            "field_name": "category",
+            "old_value": old_category,
+            "new_value": new_category,
+            "performed_by": performed_by
+        }).execute()
+
+    # ==================================================
+    # REORDER LEVEL CHANGE
+    # ==================================================
+
+    old_reorder_level = float(
+        current_item["reorder_level"] or 0
+    )
+
+    new_reorder_level = float(
+        reorder_level or 0
+    )
+
+    if old_reorder_level != new_reorder_level:
+
+        supabase.table("item_history").insert({
+            "item_id": item_id,
+            "event_type": "field_changed",
+            "field_name": "reorder_level",
+            "old_value": old_reorder_level,
+            "new_value": new_reorder_level,
+            "performed_by": performed_by
+        }).execute()
 
     return response.data
 

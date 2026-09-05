@@ -8,7 +8,7 @@ from utils.database import supabase
 # ITEM IMPORT
 # ==========================================================
 
-def import_items_csv(file):
+def import_items_csv(file, performed_by):
 
     content = file.getvalue().decode("utf-8-sig")
     reader = csv.DictReader(io.StringIO(content))
@@ -157,6 +157,14 @@ def import_items_csv(file):
                 raise ValueError(
                     "Item could not be inserted."
                 )
+
+            created_item = response.data[0]
+
+            supabase.table("item_history").insert({
+                "item_id": created_item["id"],
+                "event_type": "created",
+                "performed_by": performed_by
+            }).execute()
 
             existing_skus.add(sku.lower())
 
