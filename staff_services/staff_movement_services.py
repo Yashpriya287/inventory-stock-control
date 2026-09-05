@@ -272,6 +272,9 @@ def get_staff_recent_movements(user_id):
                 name,
                 sku
             ),
+            users:recorded_by (
+                full_name
+            ),
             locations!stock_movements_location_id_fkey (
                 name
             ),

@@ -12,6 +12,7 @@ from screens.manager_pages.Stock_Movements import stock_movement_page
 from screens.manager_pages.Alerts import low_stock_alerts_page
 from screens.manager_pages.item_history import item_history_page
 from screens.manager_pages.user import users_page
+from screens.manager_pages.import_export import import_export_page
 def manager_screen():
     style_base_layout()
     style_background_home()
@@ -93,7 +94,8 @@ def manager_screen():
                 "↔️  Stock Movements",
                 "👥  Users",
                 "🔔  Low Stock Alerts",
-                "↩️  Item History"
+                "↩️  Item History",
+                "📥  Import / Export"
             ],
             key="selected_page",
             label_visibility="collapsed"
@@ -179,4 +181,8 @@ def manager_screen():
     elif page_name == "Item History":
 
         item_history_page()
+
+    elif page_name == "Import / Export":
+
+        import_export_page()    
 

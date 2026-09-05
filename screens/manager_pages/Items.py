@@ -1,8 +1,9 @@
 import streamlit as st
-from manager_services.item_service import create_item, get_items, update_item,update_item_status
+from manager_services.item_service import create_item, get_items,get_manager_items, update_item,update_item_status
 from utils.layout import style_base_layout
 from manager_services.category_service import get_categories
 from manager_services.stock_service import get_available_stock_by_item
+from utils.database import supabase
 def items_page():
     style_base_layout()
     if "show_add_item_form" not in st.session_state:
@@ -149,138 +150,436 @@ def items_page():
 
     st.divider()
 
-    # ---------- FILTERS ----------
+    # ==========================================================
+    # FILTERS
+    # ==========================================================
 
-    search_col, category_col, status_col = st.columns([1.6, 0.8, 0.8])
+    st.subheader("Inventory Items")
+
+    # Get active locations
+    locations_response = (
+        supabase
+        .table("locations")
+        .select("id, name")
+        .eq("is_active", True)
+        .order("name")
+        .execute()
+    )
+
+    locations = locations_response.data or []
+
+    location_options = {
+        "All Locations": None
+    }
+
+    for location in locations:
+        location_options[location["name"]] = location["id"]
+
+
+    # ----------------------------------------------------------
+    # FILTER ROW 1
+    # ----------------------------------------------------------
+
+    search_col, category_col, status_col = st.columns(
+        [1.5, 1, 1]
+    )
 
     with search_col:
-        search = st.text_input( "Search",placeholder="🔍 Search by item name or SKU", label_visibility="collapsed")
+
+        search = st.text_input(
+            "Search",
+            placeholder="🔍 Search by item name or SKU",
+            label_visibility="collapsed"
+        )
 
     with category_col:
-        category_filter_options = ["All Categories"] + [
-            category["name"] for category in categories
-        ]
 
-        category_filter = st.selectbox( "Category Filter", category_filter_options, label_visibility="collapsed")
+        category_filter_options = {
+            "All Categories": None
+        }
+
+        for category in categories:
+            category_filter_options[category["name"]] = category["id"]
+
+        category_filter = st.selectbox(
+            "Category",
+            list(category_filter_options.keys()),
+            label_visibility="collapsed"
+        )
+
 
     with status_col:
-        status_filter = st.selectbox( "Status Filter",  ["All Status", "Active", "Archived"], label_visibility="collapsed" )
-    # ---------- TABLE HEADER ----------
 
-    headers = st.columns([1, 2, 1.25, 1, 1.2, 1, 0.6])
+        status_filter = st.selectbox(
+            "Status",
+            [
+                "Active",
+                "Archived",
+                "All Status"
+            ],
+            label_visibility="collapsed"
+        )
 
-    for col, text in zip(headers, [
-        "SKU",
-        "ITEM NAME",
-        "CATEGORY",
-        "AVAILABLE STOCK",
-        "REORDER LEVEL",
-        "STATUS",
-        "ACTIONS"
-    ]):
+
+    # ----------------------------------------------------------
+    # FILTER ROW 2
+    # ----------------------------------------------------------
+
+    location_col, stock_col, sort_col, order_col = st.columns(
+        [1, 1, 1, 0.8]
+    )
+
+    with location_col:
+
+        location_filter = st.selectbox(
+            "Location",
+            list(location_options.keys()),
+            label_visibility="collapsed"
+        )
+
+
+    with stock_col:
+
+        stock_filter = st.selectbox(
+            "Stock",
+            [
+                "All Stock",
+                "At / Below Reorder"
+            ],
+            label_visibility="collapsed"
+        )
+
+
+    with sort_col:
+
+        sort_filter = st.selectbox(
+            "Sort By",
+            [
+                "Name",
+                "Available Stock",
+                "Reorder Level"
+            ],
+            label_visibility="collapsed"
+        )
+
+
+    with order_col:
+
+        sort_order = st.selectbox(
+            "Order",
+            [
+                "Ascending",
+                "Descending"
+            ],
+            label_visibility="collapsed"
+        )
+
+
+    # ==========================================================
+    # PAGINATION STATE
+    # ==========================================================
+
+    if "manager_items_page" not in st.session_state:
+        st.session_state.manager_items_page = 1
+
+
+    # Reset page whenever filters change
+    current_filters = (
+        search,
+        category_filter,
+        status_filter,
+        location_filter,
+        stock_filter,
+        sort_filter,
+        sort_order
+    )
+
+    if st.session_state.get("manager_items_filters") != current_filters:
+
+        st.session_state.manager_items_page = 1
+        st.session_state.manager_items_filters = current_filters
+
+
+    page_size = 5
+
+    current_page = st.session_state.manager_items_page
+
+
+    # ==========================================================
+    # DATABASE QUERY
+    # ==========================================================
+
+    category_id = category_filter_options[category_filter]
+
+    location_id = location_options[location_filter]
+
+    show_archived = status_filter != "Active"
+
+    sort_by = {
+        "Name": "name",
+        "Available Stock": "on_hand",
+        "Reorder Level": "reorder_level"
+    }[sort_filter]
+
+    sort_desc = sort_order == "Descending"
+
+
+    # ----------------------------------------------------------
+    # GET ITEMS
+    # ----------------------------------------------------------
+
+    result = get_manager_items(
+        search=search,
+        category_id=category_id,
+        location_id=location_id,
+        show_archived=show_archived,
+        at_or_below_reorder=(
+            stock_filter == "At / Below Reorder"
+        ),
+        sort_by=sort_by,
+        sort_desc=sort_desc,
+        page=current_page,
+        page_size=page_size
+    )
+
+    # ----------------------------------------------------------
+    # GET ITEMS RESULT
+    # ----------------------------------------------------------
+
+    items = result["items"]
+    total_count = result["total_count"]
+    # ----------------------------------------------------------
+    # ALL LOCATIONS → TOTAL STOCK
+    # ----------------------------------------------------------
+
+    if location_id is None and items:
+
+        available_stock_by_item = get_available_stock_by_item()
+
+        for item in items:
+
+            item["quantity_on_hand"] = (
+                available_stock_by_item.get(
+                    item["id"],
+                    0
+                )
+            )
+
+
+    # ==========================================================
+    # TABLE HEADER
+    # ==========================================================
+
+    st.write("")
+
+    headers = st.columns(
+        [1, 2, 1.25, 1, 1.2, 1, 0.6]
+    )
+
+    for col, text in zip(
+        headers,
+        [
+            "SKU",
+            "ITEM NAME",
+            "CATEGORY",
+            "AVAILABLE STOCK",
+            "REORDER LEVEL",
+            "STATUS",
+            "ACTIONS"
+        ]
+    ):
         col.markdown(f"**{text}**")
 
     st.divider()
 
-    # ---------- DATABASE ITEMS ----------
 
-    items = get_items()
-
-    available_stock_by_item = (
-    get_available_stock_by_item()
-    )
-
-    # ---------- SEARCH FILTER ----------
-
-    if search:
-        search = search.lower()
-
-        items = [
-            item for item in items
-            if search in item["name"].lower()
-            or search in item["sku"].lower()
-        ]
-    # ---------- CATEGORY FILTER ----------
-
-    if category_filter != "All Categories":
-
-        items = [
-            item for item in items
-            if item.get("categories")
-            and item["categories"]["name"] == category_filter
-        ]   
-
-    # ---------- STATUS FILTER ----------
-    if status_filter == "Active":
-        items = [
-            item for item in items
-            if not item["is_archived"]
-        ]
-
-    elif status_filter == "Archived":
-        items = [
-            item for item in items
-            if item["is_archived"]
-        ]
-
+    # ==========================================================
+    # ITEMS
+    # ==========================================================
 
     if not items:
-        st.info("No items have been added yet.")
 
-    for item in items:
+        st.info("No items match the selected filters.")
 
-        cols = st.columns([1, 2, 1.25, 1, 1.2, 1, 0.6])
+    else:
 
-        cols[0].write(item["sku"])
-        cols[1].write(item["name"])
+        # Stock is already returned by get_items()
+        # when stock filtering/location/sorting is used.
 
-        category_name = (
-            item["categories"]["name"]
-            if item.get("categories")
-            else "—"
+        for item in items:
+
+            cols = st.columns(
+                [1, 2, 1.25, 1, 1.2, 1, 0.6]
+            )
+
+            cols[0].write(item["sku"])
+
+            cols[1].write(item["name"])
+
+            category_name = (
+                item["categories"]["name"]
+                if item.get("categories")
+                else "—"
+            )
+
+            cols[2].write(category_name)
+
+            available_stock = float(
+                item.get("quantity_on_hand", 0)
+            )
+
+            cols[3].write(
+                f"{available_stock:.0f}"
+            )
+
+            cols[4].write(
+                f"{float(item['reorder_level']):.0f}"
+            )
+
+            if item["is_archived"]:
+
+                cols[5].warning("Archived")
+
+            else:
+
+                cols[5].success("Active")
+
+            with cols[6]:
+
+                with st.popover(
+                    "•••",
+                    use_container_width=False
+                ):
+
+                    if st.button(
+                        "✏️ Edit",
+                        key=f"edit_item_{item['id']}"
+                    ):
+
+                        st.session_state.editing_item_id = item["id"]
+                        st.rerun()
+
+                    if item["is_archived"]:
+
+                        if st.button(
+                            "Unarchive",
+                            key=f"unarchive_item_{item['id']}"
+                        ):
+
+                            try:
+
+                                update_item_status(
+                                    item["id"],
+                                    False
+                                )
+
+                                st.rerun()
+
+                            except Exception as e:
+
+                                st.error(
+                                    f"Error updating item: {e}"
+                                )
+
+                    else:
+
+                        if st.button(
+                            "Archive",
+                            key=f"archive_item_{item['id']}"
+                        ):
+
+                            try:
+
+                                update_item_status(
+                                    item["id"],
+                                    True
+                                )
+
+                                st.rerun()
+
+                            except Exception as e:
+
+                                st.error(
+                                    f"Error updating item: {e}"
+                                )
+
+
+    # ==========================================================
+    # PAGINATION
+    # ==========================================================
+
+    if total_count > 0:
+
+        total_pages = max(
+            1,
+            (total_count + page_size - 1) // page_size
         )
 
-        cols[2].write(category_name)
-        available_stock = available_stock_by_item.get(  item["id"],0)
+        start_item = (
+            (current_page - 1) * page_size
+        ) + 1
 
-        cols[3].write(f"{available_stock:.0f}" )
+        end_item = min(
+            current_page * page_size,
+            total_count
+        )
 
-        cols[4].write(f"{item['reorder_level']:.0f}" )
+        st.write(
+            f"Showing {start_item}–{end_item} "
+            f"of {total_count} items"
+        )
 
-        if item["is_archived"]:
-            cols[5].warning("Archived")
-        else:
-            cols[5].success("Active")
+        prev_col, page_col, next_col = st.columns(
+            [1, 2, 1]
+        )
 
-        with cols[6]:
+        with prev_col:
 
-            with st.popover("•••", use_container_width=False):
-                if st.button("✏️ Edit",key=f"edit_item_{item['id']}"):
-                    st.session_state.editing_item_id = item["id"]
-                    st.rerun()
+            if st.button(
+                "← Previous",
+                disabled=current_page <= 1,
+                use_container_width=True
+            ):
 
-                if item["is_archived"]:
+                st.session_state.manager_items_page -= 1
+                st.rerun()
 
-                    if st.button( "Unarchive",key=f"unarchive_item_{item['id']}" ):
-                        try:
-                            update_item_status(  item["id"],False )
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"Error updating item: {e}")
+        with page_col:
 
-                else:
+            st.markdown(
+                f"<div style='text-align:center;'>"
+                f"Page <b>{current_page}</b> "
+                f"of <b>{total_pages}</b>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
 
-                    if st.button( "Archive",key=f"archive_item_{item['id']}"):
-                        try:
-                            update_item_status( item["id"], True )
-                            st.rerun()
+        with next_col:
 
-                        except Exception as e:
-                            st.error(f"Error updating item: {e}")
+            if st.button(
+                "Next →",
+                disabled=current_page >= total_pages,
+                use_container_width=True
+            ):
+
+                st.session_state.manager_items_page += 1
+                st.rerun()
+
+
+
     # ---------- EDIT ITEM FORM ----------
 
     if st.session_state.editing_item_id:
-        editing_item = next(( item for item in get_items() if item["id"] == st.session_state.editing_item_id ),None)
+        editing_items = get_items()
+
+        editing_item = next(
+            (
+                item
+                for item in editing_items
+                if item["id"] == st.session_state.editing_item_id
+            ),
+            None
+        )
 
         if editing_item:
 

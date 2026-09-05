@@ -649,9 +649,21 @@ def staff_stock_movements_page():
                     f"**{location}**"
                 )
 
+            # ---------- RECORDED BY ----------
+
+            user = movement.get("users") or {}
+
+            recorded_by = user.get(
+                "full_name",
+                "Unknown User"
+            )
+
+
+            # ---------- RECORDED AT ----------
+
             created_at = datetime.fromisoformat(
-                    movement["created_at"]
-                )
+                movement["created_at"]
+            )
 
             india_time = created_at.astimezone(
                 ZoneInfo("Asia/Kolkata")
@@ -661,6 +673,8 @@ def staff_stock_movements_page():
                 "%d %b %Y, %I:%M %p"
             )
 
+
             st.caption(
-                f"Recorded: {formatted_time}"
+                f"Recorded by: {recorded_by} | "
+                f"Recorded at: {formatted_time}"
             )
