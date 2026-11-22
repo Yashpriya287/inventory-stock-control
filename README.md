@@ -1,4 +1,4 @@
-# Assignment 02 — Inventory & Stock Control
+Inventory & Stock Control
 
 ## The scenario
 
