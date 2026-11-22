@@ -6,7 +6,7 @@ def render_header():
     left, center, right = st.columns([1.4, 3, 1.4])
 
     with center:
-        # Box + BUSY in one row
+        # Box + EDU in one row
         icon_col, text_col = st.columns([1, 3.5], gap="small",vertical_alignment="center")
 
         with icon_col:
@@ -17,7 +17,7 @@ def render_header():
 
         with text_col:
 
-            st.title("BUSY")
+            st.title("EDU")
             st.caption("Inventory & Stock Control System")
                 
             

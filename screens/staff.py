@@ -37,7 +37,7 @@ def staff_screen():
 
         # LOGO
 
-        st.markdown("## 📦 BUSY")
+        st.markdown("## 📦 EDU")
         st.caption("Inventory & Stock Control")
 
         st.divider()
@@ -102,7 +102,7 @@ def staff_screen():
         st.markdown(
             """
             <div class="sidebar-footer">
-                © 2026 BUSY System<br>
+                © 2026 EDU System<br>
                 All rights reserved.
             </div>
             """,

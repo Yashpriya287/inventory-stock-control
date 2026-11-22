@@ -51,7 +51,7 @@ def manager_screen():
     with st.sidebar:
 
     # LOGO
-        st.markdown("## 📦 BUSY")
+        st.markdown("## 📦 EDU")
         st.caption("Inventory & Stock Control")
 
         st.divider()
@@ -119,7 +119,7 @@ def manager_screen():
         st.markdown(
             """
             <div class="sidebar-footer">
-                © 2026 BUSY System<br>
+                © 2026 EDU System<br>
                 All rights reserved.
             </div>
             """,

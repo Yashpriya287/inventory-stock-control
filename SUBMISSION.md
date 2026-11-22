@@ -53,10 +53,6 @@
 
 ---
 
-## Time Spent
-
-Approximately **14 hours** were spent on the project, including database design, backend/service implementation, UI development, integration, debugging, testing, documentation, and deployment.
-
 ## Closing Questions
 
 ### What was the most challenging part of the project?

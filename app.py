@@ -8,7 +8,7 @@ from screens.manager import manager_screen
 def main():
 
     st.set_page_config(
-        page_title="Busy - Inventory & Stock Control",
+        page_title="EDU - Inventory & Stock Control",
         page_icon="📦",
         layout="wide",
         initial_sidebar_state="expanded"
